@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuronet hosting - CONTROL PANEL</title>
+    <!-- Los estilos CSS son los mismos que ya tenías -->
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background-color: #f8f9fa; color: #333; }
+        .header { background: white; border-bottom: 1px solid #e9ecef; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .logo { display: flex; align-items: center; gap: 8px; }
+        .logo-icon { width: 24px; height: 24px; background: #007bff; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        .logo-text { font-size: 16px; font-weight: 600; color: #333; }
+        .subtitle { font-size: 13px; color: #666; margin-left: 8px; }
+        .header-right { display: flex; align-items: center; gap: 16px; }
+        .projects-count { font-size: 14px; color: #666; }
+        .new-project-btn { background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .new-project-btn:hover { background: #0056b3; }
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .stat-card { background: white; border-radius: 8px; padding: 20px; border: 1px solid #e9ecef; }
+        .stat-label { font-size: 14px; color: #666; margin-bottom: 8px; }
+        .stat-value { font-size: 24px; font-weight: 600; color: #333; }
+        .deploy-section { background: white; border-radius: 8px; padding: 40px; text-align: center; margin-bottom: 32px; border: 1px solid #e9ecef; }
+        .deploy-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+        .deploy-subtitle { color: #666; margin-bottom: 32px; }
+        .form-group { text-align: left; margin-bottom: 16px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .form-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; }
+        .paste-code-btn { background: #f8f9fa; color: #333; border: 1px solid #ddd; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; width: 100%; }
+        .projects-section { background: white; border-radius: 8px; border: 1px solid #e9ecef; }
+        .projects-header { padding: 20px 24px; border-bottom: 1px solid #e9ecef; }
+        .projects-title { font-size: 18px; font-weight: 600; }
+        .project-item { padding: 24px; border-bottom: 1px solid #e9ecef; }
+        .project-item:last-child { border-bottom: none; }
+        .project-name { font-size: 16px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .project-status { color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .project-description { color: #666; font-size: 14px; margin-bottom: 12px; }
+        .project-meta { font-size: 14px; color: #666; margin-bottom: 16px; }
+        .project-url { font-family: monospace; color: #007bff; background: #f8f9fa; padding: 4px 8px; border-radius: 4px; margin-bottom: 16px; display: inline-block; cursor: pointer; }
+        .project-actions { display: flex; gap: 12px; }
+        .action-btn { background: none; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .action-btn.copy { color: #007bff; background: #f8f9ff; }
+        .action-btn.pause { color: #6c757d; background: #f8f9fa; }
+        .action-btn.delete { color: #dc3545; background: #fff8f8; }
+        .no-projects { padding: 40px; text-align: center; color: #666; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; border-radius: 8px; width: 90%; max-width: 600px; padding: 24px; position: relative; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 20px; font-weight: 600; }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; }
+        .code-editor { width: 100%; height: 300px; font-family: 'Courier New', monospace; border: 1px solid #ddd; border-radius: 6px; padding: 12px; resize: vertical; }
+        .deploy-btn { background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; width: 100%; margin-top: 16px; }
+        .hidden { display: none; }
+        #projectsList { border-top: 1px solid #e9ecef; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">N</div>
+            <span class="logo-text">Neuronet Panel</span>
+            <span class="subtitle">Personal Hosting Control</span>
+        </div>
+        <div class="header-right">
+            <span class="projects-count" id="projectsCount">0/0 projects active</span>
+            <button class="new-project-btn" onclick="openPasteModal()">+ New Project</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Active Projects</div>
+                <div class="stat-value" id="activeProjects">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Projects</div>
+                <div class="stat-value" id="totalProjects">0</div>
+            </div>
+        </div>
+
+        <div class="projects-section">
+            <div class="projects-header">
+                <h2 class="projects-title">Your Projects</h2>
+            </div>
+            <div id="projectsList">
+                <!-- Los proyectos se listarán aquí por JS -->
+            </div>
+            <div class="no-projects hidden" id="emptyState">
+                <p>📦 No projects yet. Click "+ New Project" to get started.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para pegar código -->
+    <div class="modal" id="pasteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Deploy New Project</h3>
+                <button class="close-btn" onclick="closePasteModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Project Name</label>
+                <input type="text" class="form-input" id="modalProjectName" placeholder="My Client's Awesome Project">
+            </div>
+             <div class="form-group">
+                <label class="form-label">Description</label>
+                <input type="text" class="form-input" id="modalProjectDescription" placeholder="Brief description of the project">
+            </div>
+            <div class="form-group">
+                <label class="form-label">HTML/CSS/JavaScript Code</label>
+                <textarea class="code-editor" id="codeEditor" placeholder="Paste all your code here..."></textarea>
+            </div>
+            <button class="deploy-btn" onclick="deployProject()">Deploy Project</button>
+        </div>
+    </div>
+
+    <!-- 
+      EL SCRIPT DEL SERVICE WORKER
+      Este bloque no es visible. Es el "servidor" que se ejecuta en segundo plano.
+    -->
+    <script id="service-worker-script" type="javascript/worker">
+        // Se activa inmediatamente para tomar control
+        self.addEventListener('activate', event => {
+            event.waitUntil(clients.claim());
+        });
+
+        // La función principal: interceptar peticiones de red
+        self.addEventListener('fetch', event => {
+            const url = new URL(event.request.url);
+
+            // Solo nos interesan las URLs que hemos generado para los proyectos
+            if (url.pathname.startsWith('/projects/')) {
+                const projectId = url.pathname.split('/')[2];
+
+                // Respondemos con una Promesa que se resolverá con el contenido del proyecto
+                event.respondWith(
+                    (async () => {
+                        // Pedimos los datos del proyecto a la pestaña principal (el panel de control)
+                        const projectData = await getProjectDataFromClient(projectId);
+
+                        if (!projectData) {
+                            return new Response('<h1>404 - Project Not Found</h1><p>The requested project does not exist.</p>', {
+                                status: 404,
+                                headers: { 'Content-Type': 'text/html' },
+                            });
+                        }
+                        
+                        if (projectData.status === 'paused') {
+                             return new Response('<h1>Site Paused</h1><p>This website is temporarily unavailable.</p>', {
+                                status: 403,
+                                headers: { 'Content-Type': 'text/html' },
+                            });
+                        }
+
+                        // Si todo está bien, servimos el código del proyecto
+                        return new Response(projectData.code, {
+                            status: 200,
+                            headers: { 'Content-Type': 'text/html' },
+                        });
+                    })()
+                );
+            }
+        });
+        
+        // Función para comunicarse con la pestaña del panel y pedirle los datos de un proyecto
+        function getProjectDataFromClient(projectId) {
+            return new Promise(async (resolve) => {
+                // Busca la ventana del panel de control
+                const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+                if (clientList.length > 0) {
+                    const client = clientList[0];
+                    // Usamos un MessageChannel para una comunicación limpia de ida y vuelta
+                    const channel = new MessageChannel();
+                    
+                    // Cuando recibimos la respuesta del panel, resolvemos la promesa
+                    channel.port1.onmessage = (event) => {
+                        resolve(event.data);
+                    };
+
+                    // Enviamos el mensaje al panel pidiendo los datos
+                    client.postMessage({ type: 'GET_PROJECT_DATA', id: projectId }, [channel.port2]);
+                } else {
+                    resolve(null); // No se encontró el panel
+                }
+            });
+        }
+    </script>
+
+
+    <!-- 
+      EL SCRIPT DEL PANEL DE CONTROL
+      Este es el JavaScript para la interfaz que tú usas.
+    -->
+    <script>
+        const DB_KEY = 'neuronet_projects';
+        let projects = [];
+
+        // --- FUNCIONES DE LA BASE DE DATOS (localStorage) ---
+        function loadProjectsFromDB() {
+            const data = localStorage.getItem(DB_KEY);
+            projects = data ? JSON.parse(data) : [];
+        }
+
+        function saveProjectsToDB() {
+            localStorage.setItem(DB_KEY, JSON.stringify(projects));
+        }
+        
+        // --- LÓGICA DEL PANEL DE CONTROL ---
+        
+        function deployProject() {
+            const name = document.getElementById('modalProjectName').value.trim();
+            const description = document.getElementById('modalProjectDescription').value.trim();
+            const code = document.getElementById('codeEditor').value;
+
+            if (!name || !code) {
+                alert('Project Name and Code are required.');
+                return;
+            }
+
+            const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const newProject = {
+                id: `${slug}--${Date.now()}`,
+                name,
+                description,
+                code,
+                status: 'active',
+                createdAt: new Date().toISOString()
+            };
+
+            projects.push(newProject);
+            saveProjectsToDB();
+            renderAllProjects();
+            closePasteModal();
+        }
+
+        function deleteProject(projectId) {
+            if (!confirm('Are you sure you want to permanently delete this project?')) return;
+            projects = projects.filter(p => p.id !== projectId);
+            saveProjectsToDB();
+            renderAllProjects();
+        }
+
+        function togglePauseProject(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (project) {
+                project.status = project.status === 'active' ? 'paused' : 'active';
+                saveProjectsToDB();
+                renderAllProjects();
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => alert('Link copied to clipboard!'));
+        }
+
+        // --- FUNCIONES DE RENDERIZADO Y UI ---
+        
+        function updateStats() {
+            const totalCount = projects.length;
+            const activeCount = projects.filter(p => p.status === 'active').length;
+            document.getElementById('totalProjects').textContent = totalCount;
+            document.getElementById('activeProjects').textContent = activeCount;
+            document.getElementById('projectsCount').textContent = `${activeCount}/${totalCount} projects active`;
+        }
+
+        function renderAllProjects() {
+            const listEl = document.getElementById('projectsList');
+            const emptyEl = document.getElementById('emptyState');
+            listEl.innerHTML = '';
+
+            if (projects.length === 0) {
+                emptyEl.classList.remove('hidden');
+            } else {
+                emptyEl.classList.add('hidden');
+                // Ordenar por fecha de creación para mostrar los más nuevos primero
+                const sortedProjects = [...projects].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                sortedProjects.forEach(p => {
+                    const projectUrl = `${window.location.origin}/projects/${p.id}/`;
+                    const isPaused = p.status === 'paused';
+                    const statusStyle = `background: ${isPaused ? '#6c757d' : '#28a745'};`;
+                    const pauseButtonText = isPaused ? '▶️ Resume' : '⏸️ Pause';
+                    
+                    const item = document.createElement('div');
+                    item.className = 'project-item';
+                    item.innerHTML = `
+                        <div class="project-name">
